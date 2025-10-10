@@ -1,582 +1,798 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>999 | Music Hub</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Persistent Music Player</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Raleway:wght@300;400;600&display=swap');
-    
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-
-    @media (max-width: 480px) {
-      header {
-        width: 180px;
-        height: 180px;
-      }
-      header img.logo-500 {
-        width: 160px;
-        height: 160px;
-      }
-      h1 { 
-        font-size: 2.5rem; 
-      }
-      .btn {
-        padding: 12px 20px;
-        font-size: 0.9rem;
-        max-width: 130px;
-      }
-      .music-toggle {
-        width: 45px;
-        height: 45px;
-      }
-      .music-toggle svg {
-        width: 18px;
-        height: 18px;
-      }
-      #ringCanvas {
-        width: 180px;
-        height: 180px;
-      }
-      
-      .lnl3Vm_dbdc0f63fcf9ce25e8c2 {
-        font-size: 24px !important;
-      }
-    }
-    
-    html, body {
-      height: 100%; 
-      width: 100%;
-      font-family: 'Raleway', sans-serif;
-      background: radial-gradient(circle at 20% 20%, #1a0033 0%, #0a0a2e 25%, #000 70%);
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #121212;
       color: #fff;
-      overflow-x: hidden;
-      position: relative;
+      height: 100vh;
+      overflow: hidden;
     }
-
-    /* Animated background particles */
-    .bg-particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
+    .app {
+      display: flex;
+      height: 100vh;
     }
-
-    .particle {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(147, 51, 234, 0.6);
-      border-radius: 50%;
-      animation: float 20s infinite linear;
-    }
-
-    @keyframes float {
-      0% {
-        transform: translateY(100vh) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-10vh) rotate(360deg);
-        opacity: 0;
-      }
-    }
-
-    main {
+    .sidebar {
+      width: 240px;
+      background: #000;
+      padding: 24px 12px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 40px 20px 120px;
-      min-height: 100vh;
-      justify-content: center;
-      position: relative;
+      gap: 24px;
     }
-
-    header {
-      text-align: center;
-      margin-bottom: 40px;
-      position: relative;
-      width: 280px;
-      height: 280px;
-      animation: fadeInUp 1s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    header img.logo-500 {
-      width: 260px;
-      height: 260px;
-      border-radius: 50%;
-      margin: 0 auto;
-      box-shadow: 
-        0 0 40px rgba(147, 51, 234, 0.6),
-        0 0 80px rgba(147, 51, 234, 0.3),
-        inset 0 0 40px rgba(0, 0, 0, 0.3);
-      object-fit: cover;
-      display: block;
-      position: relative;
-      z-index: 2;
-      border: 3px solid rgba(147, 51, 234, 0.5);
-      transition: all 0.3s ease;
-    }
-
-    header img.logo-500:hover {
-      transform: scale(1.05);
-      box-shadow: 
-        0 0 60px rgba(147, 51, 234, 0.8),
-        0 0 120px rgba(147, 51, 234, 0.4),
-        inset 0 0 40px rgba(0, 0, 0, 0.3);
-    }
-
-    h1 {
-      font-family: 'Orbitron', monospace;
-      font-size: 4rem;
-      font-weight: 900;
-      margin-top: 30px;
-      line-height: 1.2;
-      background: linear-gradient(45deg, #9333ea, #ec4899, #3b82f6);
-      background-size: 300% 300%;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradientShift 3s ease-in-out infinite, textGlow 2s ease-in-out infinite alternate;
-      text-shadow: 0 0 30px rgba(147, 51, 234, 0.5);
-    }
-
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes textGlow {
-      from { filter: brightness(1); }
-      to { filter: brightness(1.2); }
-    }
-
-    .buttons {
-      margin-top: 60px;
-      margin-bottom: 60px;
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      padding: 0 12px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-      width: 100%;
-      max-width: 600px;
-      animation: fadeInUp 1s ease-out 0.3s both;
+      align-items: center;
+      gap: 10px;
     }
-
-    .btn {
-      background: linear-gradient(135deg, #581c87, #7c3aed);
-      color: #fff;
-      border: none;
-      padding: 16px 32px;
-      border-radius: 50px;
+    .nav-item {
+      padding: 12px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 1.1rem;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 16px;
       font-weight: 600;
-      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      box-shadow: 
-        0 8px 25px rgba(88, 28, 135, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      flex: 1 1 140px;
-      max-width: 180px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      color: #b3b3b3;
     }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
+    .nav-item:hover {
+      color: #fff;
     }
-
-    .btn:hover::before {
-      left: 100%;
+    .nav-item.active {
+      color: #fff;
+      background: #282828;
     }
-
-    .btn:hover {
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      box-shadow: 
-        0 12px 35px rgba(124, 58, 237, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-      transform: translateY(-3px);
+    .main {
+      flex: 1;
+      background: linear-gradient(#282828 0%, #121212 300px);
+      overflow-y: auto;
+      padding: 24px;
+      padding-bottom: 90px;
     }
-
-    .btn:active {
-      transform: translateY(-1px);
-      box-shadow: 
-        0 6px 20px rgba(124, 58, 237, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
     }
-
-    /* Canvas ring around profile */
-    #ringCanvas {
-      position: absolute;
-      top: 0; 
-      left: 0;
-      width: 280px;
-      height: 280px;
-      pointer-events: none;
-      z-index: 1;
+    .header h1 {
+      font-size: 48px;
+      font-weight: 900;
     }
-
-    /* Enhanced audio toggle button */
-    .music-toggle {
-      position: fixed;
-      top: 30px;
-      left: 30px;
-      background: linear-gradient(135deg, #4a238c, #7c3aed);
+    .search-bar {
+      background: #242424;
+      border-radius: 500px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .search-bar input {
+      background: transparent;
       border: none;
+      color: #fff;
+      flex: 1;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-bar input::placeholder {
+      color: #b3b3b3;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #181818;
+      padding: 24px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .stat-card:hover {
+      background: #282828;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: 900;
+      color: #dc143c;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      color: #b3b3b3;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .songs-header {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 150px;
+      gap: 16px;
+      padding: 8px 16px;
+      color: #b3b3b3;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      border-bottom: 1px solid #282828;
+      margin-bottom: 16px;
+    }
+    .song-item {
+      display: grid;
+      grid-template-columns: 50px 1fr 1fr 150px;
+      gap: 16px;
+      padding: 8px 16px;
+      border-radius: 4px;
+      align-items: center;
+      transition: background 0.2s;
+    }
+    .song-item:hover {
+      background: #282828;
+    }
+    .song-item.playing {
+      background: #282828;
+    }
+    .song-number {
+      color: #b3b3b3;
+      font-size: 14px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .song-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .song-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #dc143c, #ff1744);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .song-title {
+      font-weight: 600;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 300px;
+    }
+    .song-size {
+      color: #b3b3b3;
+      font-size: 14px;
+    }
+    .song-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .action-btn {
+      background: transparent;
+      border: 1px solid #b3b3b3;
+      color: #b3b3b3;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .action-btn:hover {
+      border-color: #fff;
+      color: #fff;
+    }
+    .action-btn.download {
+      background: #dc143c;
+      border-color: #dc143c;
+      color: #fff;
+    }
+    .action-btn.download:hover {
+      background: #ff1744;
+      border-color: #ff1744;
+    }
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: #b3b3b3;
+    }
+    .empty-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      opacity: 0.5;
+    }
+    .empty-text {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .empty-subtext {
+      font-size: 14px;
+    }
+    .drop-zone {
+      border: 2px dashed #b3b3b3;
+      border-radius: 8px;
+      padding: 60px 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 24px;
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: #dc143c;
+      background: rgba(220, 20, 60, 0.1);
+    }
+    .drop-icon {
       width: 60px;
       height: 60px;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 
-        0 8px 25px rgba(90, 51, 170, 0.6),
-        inset 0 2px 0 rgba(255, 255, 255, 0.2);
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      margin: 0 auto 16px;
+    }
+    .drop-text {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .drop-subtext {
+      font-size: 14px;
+      color: #b3b3b3;
+    }
+    .now-playing {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #181818;
+      border-top: 1px solid #282828;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .np-info {
+      flex: 1;
+      color: #b3b3b3;
+      font-size: 14px;
+    }
+    .np-controls {
+      flex: 1;
       display: flex;
       justify-content: center;
+      gap: 16px;
+    }
+    .ctrl-btn {
+      background: transparent;
+      border: none;
+      color: #b3b3b3;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 32px;
+      height: 32px;
+      display: flex;
       align-items: center;
-      z-index: 100;
+      justify-content: center;
     }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    .ctrl-btn:hover {
+      color: #fff;
     }
-
-    .music-toggle:hover {
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      box-shadow: 
-        0 12px 35px rgba(124, 58, 237, 0.8),
-        inset 0 2px 0 rgba(255, 255, 255, 0.3);
-      transform: scale(1.1);
+    .ctrl-btn.playing {
+      color: #dc143c;
     }
-
-    .music-toggle.playing {
-      animation: spin 3s linear infinite, pulse 2s infinite;
+    .np-stats {
+      flex: 1;
+      text-align: right;
+      color: #b3b3b3;
+      font-size: 14px;
+      font-weight: 600;
     }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    .icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
     }
-
-    .music-toggle svg {
-      width: 50px;
-      height: 50px;
-      fill: #fff;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    .icon-sm {
+      width: 16px;
+      height: 16px;
     }
-
-    footer {
-      position: fixed;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.6);
-      font-weight: 300;
-      z-index: 50;
+    .page-content {
+      display: none;
     }
-
-    /* Glowing effects */
-    .glow {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%);
-      transform: translate(-50%, -50%);
-      z-index: -1;
-      animation: breathe 4s ease-in-out infinite;
+    .page-content.active {
+      display: block;
     }
-
-    @keyframes breathe {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+    #fileInput {
+      display: none;
     }
 
     @media (max-width: 768px) {
-      header {
-        width: 220px;
-        height: 220px;
+      .sidebar {
+        width: 70px;
+        padding: 20px 8px;
       }
-      header img.logo-500 {
-        width: 200px;
-        height: 200px;
+      .logo span,
+      .nav-item span {
+        display: none;
       }
-      h1 { 
-        font-size: 3rem; 
+      .header h1 {
+        font-size: 32px;
       }
-      .btn {
-        padding: 14px 24px;
-        font-size: 1rem;
-        max-width: 150px;
+      .songs-header,
+      .song-item {
+        grid-template-columns: 40px 1fr 90px;
       }
-      .music-toggle {
-        width: 50px;
-        height: 50px;
-        top: 20px;
-        left: 20px;
+      .song-size {
+        display: none;
       }
-      .music-toggle svg {
-        width: 20px;
-        height: 20px;
-      }
-      #ringCanvas {
-        width: 220px;
-        height: 220px;
+      .stats {
+        grid-template-columns: 1fr;
       }
     }
 
-    /* Custom cursor and selection styles */
-    * { 
-      cursor: url(Roblox\ Cursor\ Link\ selecction\ \(2016\).cur) 16 16, auto !important; 
+    ::-webkit-scrollbar {
+      width: 12px;
     }
-    
-    ::-moz-selection { 
-      background: #ed73ff; 
-      color: #511f8a; 
-    } 
-    
-    ::selection { 
-      background: #ed73ff; 
-      color: #511f8a; 
+    ::-webkit-scrollbar-track {
+      background: #121212;
     }
-
-    /* Enter screen styling */
-    .cN529Y_244378cdd5913f278c3a {
-      backdrop-filter: blur(0px);
+    ::-webkit-scrollbar-thumb {
+      background: #282828;
+      border-radius: 6px;
     }
-    
-    .lnl3Vm_dbdc0f63fcf9ce25e8c2:hover {
-      color: #ed73ff;
-      transform: scale(1.05);
-      transition: all 0.3s ease;
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3e3e3e;
     }
   </style>
 </head>
 <body>
-
-<div class="bg-particles"></div>
-
-<!-- Auto-start music elements -->
-<div class="cN529Y_244378cdd5913f278c3a" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6);" id="enterScreen">
-  <div class="fRNkr3_4ac5c10f247eb261df8a hL9mZB_90eaf9aaa3c00ed121cd" style="pointer-events: none; display: block; text-align: center; color: #fff;">
-    <div class="lnl3Vm_dbdc0f63fcf9ce25e8c2" style="font-weight:700;font-size:30px;">click to enter...</div>
+  <div class="app">
+    <div class="sidebar">
+      <div class="logo">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+        <span>Music</span>
+      </div>
+      <div class="nav-item active" onclick="showPage('library')">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+        </svg>
+        <span>Library</span>
+      </div>
+      <div class="nav-item" onclick="showPage('search')">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <span>Search</span>
+      </div>
+    </div>
+    <div class="main">
+      <div class="header">
+        <h1 id="pageTitle">Your Library</h1>
+      </div>
+      <div id="libraryPage" class="page-content active">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="totalSongs">0</div>
+            <div class="stat-label">Total Songs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalSize">0 MB</div>
+            <div class="stat-label">Storage</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avgSize">0 MB</div>
+            <div class="stat-label">Avg Size</div>
+          </div>
+        </div>
+        <div class="songs-header">
+          <div>#</div>
+          <div>Title</div>
+          <div>Size</div>
+          <div>Actions</div>
+        </div>
+        <div id="songsList"></div>
+      </div>
+      <div id="searchPage" class="page-content">
+        <div class="search-bar">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input type="text" placeholder="Search for songs..." id="searchInput" />
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <svg class="drop-icon" viewBox="0 0 24 24">
+            <path fill="#b3b3b3" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          </svg>
+          <div class="drop-text">Drop MP3/MP4 files here</div>
+          <div class="drop-subtext">or click to browse your files</div>
+        </div>
+        <input type="file" id="fileInput" accept=".mp3,.mp4,audio/*,video/mp4" multiple />
+        <div id="searchResults"></div>
+      </div>
+    </div>
   </div>
-</div>
-<audio id="autoAudio" src="music.mp3" loop="" preload="auto"></audio>
 
-<main>
-  <div class="glow"></div>
-  
-  <header>
-    <canvas id="ringCanvas" width="280" height="280"></canvas>
-    <img class="logo-500" src="profile.png" alt="Profile Picture">
-  </header>
-
-  <h1>999</h1>
-
-  <div class="buttons">
-    <button class="btn" onclick="openLink('https://discord.gg/J3EVAmxGkj')">Discord</button>
-    <button class="btn" onclick="openLink('https://www.youtube.com/@JuiceWRLD')">YouTube</button>
-    <button class="btn" onclick="openLink('https://onlyfans.com')">OnlyFans</button>
+  <div class="now-playing">
+    <div class="np-info" id="nowPlayingInfo">Ready to play</div>
+    <div class="np-controls">
+      <button class="ctrl-btn" onclick="prevSong()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="ctrl-btn" onclick="nextSong()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+      </button>
+    </div>
+    <div class="np-stats" id="count">0 songs</div>
   </div>
-</main>
 
-<button class="music-toggle" id="musicBtn" title="Toggle Music" aria-label="Play/Pause Music">
-  <svg id="playIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-    <path d="M8 5v14l11-7z"/>
-  </svg>
-  <svg id="pauseIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display: none;">
-    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-  </svg>
-</button>
+  <audio id="audioPlayer"></audio>
 
-<audio id="audio" src="music.mp3" crossorigin="anonymous" loop=""></audio>
+  <script>
+    // ========== IndexedDB Setup ==========
+    const DB_NAME = 'musicPlayerDB';
+    const STORE_NAME = 'songsStore';
+    const DB_VERSION = 1;
+    let db;
 
-<footer>© 2025 Too Complicated Inc.</footer>
-
-<script>(self.__next_s=self.__next_s||[]).push(["https://assets.guns.lol/cursor-effects.js",{"id":"_cursor"}])</script>
-
-<script>
-  // Auto-enter functionality
-  function enterSite() {
-    const enterScreen = document.getElementById('enterScreen');
-    const autoAudio = document.getElementById('autoAudio');
-    
-    // Hide enter screen
-    enterScreen.style.opacity = '0';
-    enterScreen.style.transition = 'opacity 0.5s ease-out';
-    
-    setTimeout(() => {
-      enterScreen.style.display = 'none';
-    }, 500);
-    
-    // Start auto audio
-    autoAudio.volume = 0.3;
-    autoAudio.play().catch(e => console.log('Audio autoplay prevented'));
-  }
-
-  // Add click listener to entire enter screen
-  document.getElementById('enterScreen').addEventListener('click', function() {
-    enterSite();
-    // Auto-start the audio and show pause icon
-    setTimeout(() => {
-      isPlaying = true;
-      document.getElementById('playIcon').style.display = 'none';
-      document.getElementById('pauseIcon').style.display = 'block';
-    }, 100);
-  });
-
-  // Audio visualization and controls
-  const audio = document.getElementById('audio');
-  const musicBtn = document.getElementById('musicBtn');
-  const canvas = document.getElementById('ringCanvas');
-  const ctx = canvas.getContext('2d');
-  let audioCtx, analyser, dataArr, isPlaying = false;
-
-  function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 128;
-      dataArr = new Uint8Array(analyser.frequencyBinCount);
-      const source = audioCtx.createMediaElementSource(audio);
-      source.connect(analyser);
-      analyser.connect(audioCtx.destination);
-    }
-  }
-
-  function drawRing() {
-    analyser.getByteFrequencyData(dataArr);
-    let avg = dataArr.reduce((a, b) => a + b, 0) / dataArr.length;
-    let minRadius = 105;
-    let maxRadius = 140;
-    let radius = minRadius + (avg / 255) * (maxRadius - minRadius);
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw multiple rings with different intensities
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(147, 51, 234, ${0.8 - i * 0.2})`;
-      ctx.lineWidth = 4 - i;
-      ctx.shadowColor = 'rgba(147, 51, 234, 0.8)';
-      ctx.shadowBlur = 15 + i * 5;
-      ctx.arc(canvas.width/2, canvas.height/2, radius + i * 5, 0, 2 * Math.PI);
-      ctx.stroke();
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = (e) => {
+          console.error('IndexedDB open error', e);
+          reject(e);
+        };
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains(STORE_NAME)) {
+            const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            store.createIndex('name', 'name', { unique: false });
+          }
+        };
+        request.onsuccess = (e) => {
+          db = e.target.result;
+          resolve(db);
+        };
+      });
     }
 
-    // Draw frequency bars around the ring
-    const barCount = 32;
-    const angleStep = (2 * Math.PI) / barCount;
-    
-    for (let i = 0; i < barCount; i++) {
-      const barHeight = (dataArr[i] || 0) / 255 * 30;
-      const angle = i * angleStep;
-      const x1 = canvas.width/2 + Math.cos(angle) * (radius + 10);
-      const y1 = canvas.height/2 + Math.sin(angle) * (radius + 10);
-      const x2 = canvas.width/2 + Math.cos(angle) * (radius + 10 + barHeight);
-      const y2 = canvas.height/2 + Math.sin(angle) * (radius + 10 + barHeight);
-      
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(236, 72, 153, ${0.7 + barHeight/30 * 0.3})`;
-      ctx.lineWidth = 2;
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+    function getAllSongsFromDb() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onerror = (e) => reject(e);
+        req.onsuccess = (e) => resolve(e.target.result || []);
+      });
     }
 
-    if (isPlaying) {
-      requestAnimationFrame(drawRing);
+    function addSongToDb(songObj) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.put(songObj);
+        req.onsuccess = () => resolve();
+        req.onerror = (e) => reject(e);
+      });
     }
-  }
 
-  function togglePlay() {
-    const autoAudio = document.getElementById('autoAudio');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
+    function deleteSongFromDb(id) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = (e) => reject(e);
+      });
+    }
 
-    if (!isPlaying) {
-      autoAudio.volume = 0.3;
-      autoAudio.play();
-      isPlaying = true;
-      playIcon.style.display = 'none';
-      pauseIcon.style.display = 'block';
-    } else {
-      autoAudio.pause();
+    // ========== Application State ==========
+    let songs = [];  // array of { id, name, size, blob, time }
+    let currentSongIndex = -1;
+    let isPlaying = false;
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const songsList = document.getElementById('songsList');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+    const pageTitle = document.getElementById('pageTitle');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const nowPlayingInfo = document.getElementById('nowPlayingInfo');
+
+    function showPage(page) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.page-content').forEach(c => c.classList.remove('active'));
+      if (page === 'library') {
+        document.getElementById('libraryPage').classList.add('active');
+        document.querySelectorAll('.nav-item')[0].classList.add('active');
+        pageTitle.textContent = 'Your Library';
+      } else {
+        document.getElementById('searchPage').classList.add('active');
+        document.querySelectorAll('.nav-item')[1].classList.add('active');
+        pageTitle.textContent = 'Search';
+      }
+    }
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      if (!q) {
+        searchResults.innerHTML = '';
+        return;
+      }
+      const filtered = songs.filter(s => s.name.toLowerCase().includes(q));
+      if (filtered.length === 0) {
+        searchResults.innerHTML = '<div class="empty"><div class="empty-text">No results found</div></div>';
+        return;
+      }
+      searchResults.innerHTML = `
+        <div class="songs-header">
+          <div>#</div><div>Title</div><div>Size</div><div>Actions</div>
+        </div>
+        ${filtered.map((s, i) => createSongItem(s, i + 1)).join('')}
+      `;
+    });
+
+    audioPlayer.addEventListener('ended', () => nextSong());
+    audioPlayer.addEventListener('error', () => {
+      alert('Error playing file');
       isPlaying = false;
-      playIcon.style.display = 'block';
-      pauseIcon.style.display = 'none';
+      updatePlayButton();
+    });
+
+    function fmt(bytes) {
+      if (!bytes) return '0 B';
+      const k = 1024;
+      const sizes = ['B','KB','MB','GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return (Math.round((bytes / Math.pow(k, i)) * 100) / 100) + ' ' + sizes[i];
     }
-  }
 
-  musicBtn.addEventListener('click', togglePlay);
-
-  // Auto-start music on user interaction
-  document.addEventListener('click', function autoStart() {
-    if (!isPlaying && !document.getElementById('enterScreen').style.display) {
-      togglePlay();
+    function escapeHTML(str) {
+      return str.replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[c]));
     }
-    document.removeEventListener('click', autoStart);
-  }, { once: true });
 
-  function openLink(url) {
-    window.open(url, '_blank');
-  }
-
-  // Create floating particles
-  function createParticles() {
-    const particleContainer = document.querySelector('.bg-particles');
-    
-    for (let i = 0; i < 50; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 20 + 's';
-      particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
-      particleContainer.appendChild(particle);
+    function createSongItem(s, num) {
+      const isCur = songs[currentSongIndex]?.id === s.id;
+      return `
+        <div class="song-item ${isCur ? 'playing' : ''}">
+          <div class="song-number" onclick="playSong('${s.id}')">${num}</div>
+          <div class="song-info" onclick="playSong('${s.id}')">
+            <div class="song-icon">
+              <svg class="icon" viewBox="0 0 24 24" style="fill: white;">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+              </svg>
+            </div>
+            <div class="song-title">${escapeHTML(s.name)}</div>
+          </div>
+          <div class="song-size">${fmt(s.size)}</div>
+          <div class="song-actions">
+            <button class="action-btn download" onclick="dlSong('${s.id}')">
+              <svg class="icon-sm" viewBox="0 0 24 24" style="fill: currentColor;">
+                <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+              </svg>
+            </button>
+            <button class="action-btn" onclick="delSong('${s.id}')">
+              <svg class="icon-sm" viewBox="0 0 24 24" style="fill: currentColor;">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
     }
-  }
 
-  // Initialize particles on load
-  window.addEventListener('load', createParticles);
-</script>
+    async function render() {
+      if (!songs.length) {
+        songsList.innerHTML = `
+          <div class="empty">
+            <svg class="empty-icon" viewBox="0 0 24 24">
+              <path fill="#b3b3b3" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+            <div class="empty-text">No songs yet</div>
+            <div class="empty-subtext">Go to Search tab to upload your first song</div>
+          </div>
+        `;
+        updateStats();
+        return;
+      }
+      songsList.innerHTML = songs.map((s, i) => createSongItem(s, i + 1)).join('');
+      updateStats();
+    }
 
+    function updateStats() {
+      const total = songs.reduce((sum, s) => sum + s.size, 0);
+      const avg = songs.length ? total / songs.length : 0;
+      document.getElementById('totalSongs').textContent = songs.length;
+      document.getElementById('totalSize').textContent = fmt(total).split(' ')[0];
+      document.getElementById('avgSize').textContent = fmt(avg).split(' ')[0];
+      document.getElementById('count').textContent = songs.length + ' song' + (songs.length !== 1 ? 's' : '');
+    }
+
+    function playSong(id) {
+      const idx = songs.findIndex(s => s.id === id);
+      if (idx < 0) return;
+      currentSongIndex = idx;
+      const s = songs[idx];
+      if (s.blob) {
+        const url = URL.createObjectURL(s.blob);
+        audioPlayer.src = url;
+      }
+      audioPlayer.play();
+      isPlaying = true;
+      updatePlayButton();
+      nowPlayingInfo.textContent = `Now playing: ${s.name}`;
+      render();
+    }
+
+    function togglePlay() {
+      if (currentSongIndex === -1 && songs.length > 0) {
+        playSong(songs[0].id);
+      } else if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+      } else {
+        audioPlayer.play();
+        isPlaying = true;
+      }
+      updatePlayButton();
+    }
+
+    function nextSong() {
+      if (!songs.length) return;
+      currentSongIndex = (currentSongIndex + 1) % songs.length;
+      playSong(songs[currentSongIndex].id);
+    }
+
+    function prevSong() {
+      if (!songs.length) return;
+      currentSongIndex =
+        currentSongIndex <= 0 ? songs.length - 1 : currentSongIndex - 1;
+      playSong(songs[currentSongIndex].id);
+    }
+
+    function updatePlayButton() {
+      if (isPlaying) {
+        playPauseBtn.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+          </svg>
+        `;
+        playPauseBtn.classList.add('playing');
+      } else {
+        playPauseBtn.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        `;
+        playPauseBtn.classList.remove('playing');
+      }
+    }
+
+    async function handleFiles(fileList) {
+      for (let file of fileList) {
+        if ((file.type.startsWith('audio/') || file.type === 'video/mp4') || file.name.match(/\.(mp3|mp4)$/i)) {
+          const blob = file;
+          const id = `${Date.now()}-${Math.random().toString(36).substr(2)}`;
+          const songObj = {
+            id: id,
+            name: file.name,
+            size: file.size,
+            blob: blob,
+            time: Date.now()
+          };
+          songs.push(songObj);
+          try {
+            await addSongToDb(songObj);
+          } catch (e) {
+            console.error('DB save error', e);
+          }
+        }
+      }
+      await loadSongsFromDb();
+      render();
+    }
+
+    async function dlSong(id) {
+      const s = songs.find(x => x.id === id);
+      if (s) {
+        let url;
+        if (s.blob) {
+          url = URL.createObjectURL(s.blob);
+        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = s.name;
+        a.click();
+      }
+    }
+
+    async function delSong(id) {
+      if (songs[currentSongIndex]?.id === id) {
+        audioPlayer.pause();
+        audioPlayer.src = '';
+        isPlaying = false;
+        currentSongIndex = -1;
+        updatePlayButton();
+        nowPlayingInfo.textContent = 'Ready to play';
+      }
+      songs = songs.filter(s => s.id !== id);
+      try {
+        await deleteSongFromDb(id);
+      } catch (e) {
+        console.error('DB delete error', e);
+      }
+      render();
+    }
+
+    async function loadSongsFromDb() {
+      try {
+        const stored = await getAllSongsFromDb();
+        songs = stored;
+      } catch (e) {
+        console.error('DB load error', e);
+        songs = [];
+      }
+    }
+
+    async function init() {
+      await openDb();
+      await loadSongsFromDb();
+      render();
+    }
+
+    init();
+
+    // Expose for inline onClick
+    window.playSong = playSong;
+    window.dlSong = dlSong;
+    window.delSong = delSong;
+    window.showPage = showPage;
+  </script>
 </body>
 </html>
