@@ -1,119 +1,575 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>PWA Audio Player</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="profile.png">
+  <link rel="icon" type="image/png" href="profile.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Persistent Music Player</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f8f8f8; }
-    button, input { margin: 0.5rem 0; display: block; }
+    /* (Your existing CSS here) */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#121212; color:#fff; height:100vh; overflow:hidden; }
+    .app { display:flex; height:100vh; }
+    .sidebar { width:240px; background:#000; padding:24px 12px; display:flex; flex-direction:column; gap:24px; }
+    .logo { font-size:28px; font-weight:bold; padding:0 12px; display:flex; align-items:center; gap:10px; }
+    .nav-item { padding:12px; border-radius:6px; cursor:pointer; transition:background 0.2s; display:flex; align-items:center; gap:16px; font-weight:600; color:#b3b3b3; }
+    .nav-item:hover { color:#fff; }
+    .nav-item.active { color:#fff; background:#282828; }
+    .main { flex:1; background:linear-gradient(#282828 0%, #121212 300px); overflow-y:auto; padding:24px; padding-bottom:90px; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:32px; }
+    .header h1 { font-size:48px; font-weight:900; }
+    .search-bar { background:#242424; border-radius:500px; padding:12px 20px; display:flex; align-items:center; gap:12px; margin-bottom:32px; }
+    .search-bar input { background:transparent; border:none; color:#fff; flex:1; font-size:14px; outline:none; }
+    .search-bar input::placeholder { color:#b3b3b3; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; margin-bottom:32px; }
+    .stat-card { background:#181818; padding:24px; border-radius:8px; transition:background 0.2s; }
+    .stat-card:hover { background:#282828; }
+    .stat-value { font-size:32px; font-weight:900; color:#dc143c; margin-bottom:8px; }
+    .stat-label { color:#b3b3b3; font-size:14px; font-weight:600; }
+    .songs-header { display:grid; grid-template-columns:50px 1fr 1fr 150px; gap:16px; padding:8px 16px; color:#b3b3b3; font-size:12px; font-weight:600; text-transform:uppercase; border-bottom:1px solid #282828; margin-bottom:16px; }
+    .song-item { display:grid; grid-template-columns:50px 1fr 1fr 150px; gap:16px; padding:8px 16px; border-radius:4px; align-items:center; transition:background 0.2s; }
+    .song-item:hover { background:#282828; }
+    .song-item.playing { background:#282828; }
+    .song-number { color:#b3b3b3; font-size:14px; text-align:center; cursor:pointer; }
+    .song-info { display:flex; align-items:center; gap:12px; cursor:pointer; }
+    .song-icon { width:40px; height:40px; background:linear-gradient(135deg, #dc143c, #ff1744); border-radius:4px; display:flex; align-items:center; justify-content:center; }
+    .song-title { font-weight:600; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:300px; }
+    .song-size { color:#b3b3b3; font-size:14px; }
+    .song-actions { display:flex; gap:8px; justify-content:flex-end; }
+    .action-btn { background:transparent; border:1px solid #b3b3b3; color:#b3b3b3; padding:8px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; display:flex; align-items:center; gap:4px; }
+    .action-btn:hover { border-color:#fff; color:#fff; }
+    .action-btn.download { background:#dc143c; border-color:#dc143c; color:#fff; }
+    .action-btn.download:hover { background:#ff1744; border-color:#ff1744; }
+    .empty { text-align:center; padding:80px 20px; color:#b3b3b3; }
+    .empty-icon { width:80px; height:80px; margin:0 auto 24px; opacity:0.5; }
+    .empty-text { font-size:20px; font-weight:600; margin-bottom:8px; }
+    .empty-subtext { font-size:14px; }
+    .drop-zone { border:2px dashed #b3b3b3; border-radius:8px; padding:60px 40px; text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:24px; }
+    .drop-zone:hover, .drop-zone.dragover { border-color:#dc143c; background:rgba(220,20,60,0.1); }
+    .drop-icon { width:60px; height:60px; margin:0 auto 16px; }
+    .drop-text { font-size:16px; font-weight:600; margin-bottom:8px; }
+    .drop-subtext { font-size:14px; color:#b3b3b3; }
+    .now-playing { position:fixed; bottom:0; left:0; right:0; background:#181818; border-top:1px solid #282828; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; }
+    .np-info { flex:1; color:#b3b3b3; font-size:14px; }
+    .np-controls { flex:1; display:flex; justify-content:center; gap:16px; }
+    .ctrl-btn { background:transparent; border:none; color:#b3b3b3; cursor:pointer; transition:all 0.2s; width:32px; height:32px; display:flex; align-items:center; justify-content:center; }
+    .ctrl-btn:hover { color:#fff; }
+    .ctrl-btn.playing { color:#dc143c; }
+    .np-stats { flex:1; text-align:right; color:#b3b3b3; font-size:14px; font-weight:600; }
+    .icon { width:24px; height:24px; fill:currentColor; }
+    .icon-sm { width:16px; height:16px; }
+    .page-content { display:none; }
+    .page-content.active { display:block; }
+    #fileInput { display:none; }
+    @media (max-width:768px) {
+      .sidebar { width:70px; padding:20px 8px; }
+      .logo span, .nav-item span { display:none; }
+      .header h1 { font-size:32px; }
+      .songs-header, .song-item { grid-template-columns:40px 1fr 90px; }
+      .song-size { display:none; }
+      .stats { grid-template-columns:1fr; }
+    }
+    ::-webkit-scrollbar { width:12px; }
+    ::-webkit-scrollbar-track { background:#121212; }
+    ::-webkit-scrollbar-thumb { background:#282828; border-radius:6px; }
+    ::-webkit-scrollbar-thumb:hover { background:#3e3e3e; }
   </style>
 </head>
 <body>
-  <h2>Audio Player with IndexedDB</h2>
+  <div class="app">
+    <div class="sidebar">
+      <div class="logo">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+        <span>Music</span>
+      </div>
+      <div class="nav-item active" onclick="showPage('library')">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+        </svg>
+        <span>Library</span>
+      </div>
+      <div class="nav-item" onclick="showPage('search')">
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+        <span>Search</span>
+      </div>
+    </div>
+    <div class="main">
+      <div class="header">
+        <h1 id="pageTitle">Your Library</h1>
+      </div>
+      <div id="libraryPage" class="page-content active">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="totalSongs">0</div>
+            <div class="stat-label">Total Songs</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalSize">0 MB</div>
+            <div class="stat-label">Storage</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avgSize">0 MB</div>
+            <div class="stat-label">Avg Size</div>
+          </div>
+        </div>
+        <div class="songs-header">
+          <div>#</div><div>Title</div><div>Size</div><div>Actions</div>
+        </div>
+        <div id="songsList"></div>
+      </div>
+      <div id="searchPage" class="page-content">
+        <div class="search-bar">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input type="text" placeholder="Search for songs..." id="searchInput" />
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <svg class="drop-icon" viewBox="0 0 24 24">
+            <path fill="#b3b3b3" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+          </svg>
+          <div class="drop-text">Drop MP3/MP4 files here</div>
+          <div class="drop-subtext">or click to browse your files</div>
+        </div>
+        <input type="file" id="fileInput" accept=".mp3,.mp4,audio/*,video/mp4" multiple />
+        <div id="searchResults"></div>
+      </div>
+    </div>
+  </div>
 
-  <input type="file" id="fileInput" accept="audio/*">
-  <button id="playBtn">▶ Play</button>
-  <button id="pauseBtn">⏸ Pause</button>
+  <div class="now-playing">
+    <div class="np-info" id="nowPlayingInfo">Ready to play</div>
+    <div class="np-controls">
+      <button class="ctrl-btn" onclick="prevSong()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="playPauseBtn" onclick="togglePlay()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="ctrl-btn" onclick="nextSong()">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+      </button>
+    </div>
+    <div class="np-stats" id="count">0 songs</div>
+  </div>
+
+  <audio id="audioPlayer"></audio>
 
   <script>
-    let audio = new Audio();
-    let db;
+  // ========== IndexedDB Setup ==========
+  const DB_NAME = 'musicPlayerDB';
+  const STORE_NAME = 'songsStore';
+  const DB_VERSION = 1;
+  let db;
 
-    const fileInput = document.getElementById("fileInput");
-    const playBtn = document.getElementById("playBtn");
-    const pauseBtn = document.getElementById("pauseBtn");
-
-    // Open IndexedDB
-    const request = indexedDB.open("audioDB", 1);
-    request.onupgradeneeded = function (e) {
-      db = e.target.result;
-      if (!db.objectStoreNames.contains("songs")) {
-        db.createObjectStore("songs", { keyPath: "name" });
-      }
-    };
-
-    request.onsuccess = function (e) {
-      db = e.target.result;
-      restoreLastPlayedSong();
-    };
-
-    // Save selected file to IndexedDB
-    fileInput.addEventListener("change", function (e) {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function () {
-        const transaction = db.transaction(["songs"], "readwrite");
-        const store = transaction.objectStore("songs");
-        const songData = {
-          name: file.name,
-          blob: file,
-        };
-        store.put(songData);
-
-        localStorage.setItem("songName", file.name);
-        localStorage.setItem("currentTime", "0");
-        localStorage.setItem("paused", "true");
-
-        console.log("Saved song to IndexedDB:", file.name);
-        setAudioFromBlob(songData.blob);
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onerror = (e) => {
+        console.error('IndexedDB open error', e);
+        reject(e);
       };
-      reader.readAsArrayBuffer(file); // Just to trigger loading; data isn't used here
-    });
-
-    // Load and play song from IndexedDB
-    function restoreLastPlayedSong() {
-      const songName = localStorage.getItem("songName");
-      if (!songName) return;
-
-      const transaction = db.transaction(["songs"], "readonly");
-      const store = transaction.objectStore("songs");
-      const getRequest = store.get(songName);
-
-      getRequest.onsuccess = function (e) {
-        const result = e.target.result;
-        if (result && result.blob) {
-          setAudioFromBlob(result.blob);
-        } else {
-          console.warn("No blob found for saved song.");
+      request.onupgradeneeded = (e) => {
+        const database = e.target.result;
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
+          const store = database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          store.createIndex('name', 'name', { unique: false });
         }
       };
-    }
-
-    // Create new blob URL and set to audio.src
-    function setAudioFromBlob(blob) {
-      if (audio.src) {
-        URL.revokeObjectURL(audio.src);
-      }
-
-      const newUrl = URL.createObjectURL(blob);
-      audio.src = newUrl;
-
-      const savedTime = parseFloat(localStorage.getItem("currentTime") || "0");
-      audio.currentTime = isNaN(savedTime) ? 0 : savedTime;
-
-      const wasPaused = localStorage.getItem("paused") === "true";
-
-      // Only play if user taps play
-      playBtn.onclick = () => {
-        audio.play().then(() => {
-          console.log("Playback started");
-        }).catch(err => {
-          console.error("Playback failed:", err);
-        });
+      request.onsuccess = (e) => {
+        db = e.target.result;
+        resolve(db);
       };
-
-      pauseBtn.onclick = () => {
-        audio.pause();
-      };
-    }
-
-    // Save time and pause state before unload
-    window.addEventListener("beforeunload", () => {
-      localStorage.setItem("currentTime", audio.currentTime.toString());
-      localStorage.setItem("paused", audio.paused.toString());
     });
+  }
+
+  function getAllSongsFromDb() {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getAll();
+      req.onerror = (e) => reject(e);
+      req.onsuccess = (e) => resolve(e.target.result || []);
+    });
+  }
+
+  function addSongToDb(songObj) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.put(songObj);
+      req.onsuccess = () => resolve();
+      req.onerror = (e) => reject(e);
+    });
+  }
+
+  function deleteSongFromDb(id) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = (e) => reject(e);
+    });
+  }
+
+  // ========== Application State ==========
+  let songs = [];  // array of { id, name, size, blob, time }
+  let currentSongIndex = -1;
+  let isPlaying = false;
+
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const songsList = document.getElementById('songsList');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+  const pageTitle = document.getElementById('pageTitle');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const nowPlayingInfo = document.getElementById('nowPlayingInfo');
+
+  function showPage(page) {
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.page-content').forEach(c => c.classList.remove('active'));
+    if (page === 'library') {
+      document.getElementById('libraryPage').classList.add('active');
+      document.querySelectorAll('.nav-item')[0].classList.add('active');
+      pageTitle.textContent = 'Your Library';
+    } else {
+      document.getElementById('searchPage').classList.add('active');
+      document.querySelectorAll('.nav-item')[1].classList.add('active');
+      pageTitle.textContent = 'Search';
+    }
+  }
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    if (!q) {
+      searchResults.innerHTML = '';
+      return;
+    }
+    const filtered = songs.filter(s => s.name.toLowerCase().includes(q));
+    if (filtered.length === 0) {
+      searchResults.innerHTML = '<div class="empty"><div class="empty-text">No results found</div></div>';
+      return;
+    }
+    searchResults.innerHTML = `
+      <div class="songs-header">
+        <div>#</div><div>Title</div><div>Size</div><div>Actions</div>
+      </div>
+      ${filtered.map((s, i) => createSongItem(s, i + 1)).join('')}
+    `;
+  });
+
+  audioPlayer.addEventListener('ended', () => nextSong());
+  audioPlayer.addEventListener('error', () => {
+    console.error('Audio error occurred');
+    isPlaying = false;
+    updatePlayButton();
+  });
+
+  function fmt(bytes) {
+    if (!bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B','KB','MB','GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (Math.round((bytes / Math.pow(k, i)) * 100) / 100) + ' ' + sizes[i];
+  }
+
+  function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, c => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[c]));
+  }
+
+  function createSongItem(s, num) {
+    const isCur = songs[currentSongIndex]?.id === s.id;
+    return `
+      <div class="song-item ${isCur ? 'playing' : ''}">
+        <div class="song-number" onclick="playSong('${s.id}')">${num}</div>
+        <div class="song-info" onclick="playSong('${s.id}')">
+          <div class="song-icon">
+            <svg class="icon" viewBox="0 0 24 24" style="fill: white;">
+              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+          </div>
+          <div class="song-title">${escapeHTML(s.name)}</div>
+        </div>
+        <div class="song-size">${fmt(s.size)}</div>
+        <div class="song-actions">
+          <button class="action-btn download" onclick="dlSong('${s.id}')">
+            <svg class="icon-sm" viewBox="0 0 24 24" style="fill: currentColor;">
+              <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+            </svg>
+          </button>
+          <button class="action-btn" onclick="delSong('${s.id}')">
+            <svg class="icon-sm" viewBox="0 0 24 24" style="fill: currentColor;">
+              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    if (!songs.length) {
+      songsList.innerHTML = `
+        <div class="empty">
+          <svg class="empty-icon" viewBox="0 0 24 24">
+            <path fill="#b3b3b3" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+          <div class="empty-text">No songs yet</div>
+          <div class="empty-subtext">Go to Search tab to upload your first song</div>
+        </div>
+      `;
+      updateStats();
+      return;
+    }
+    songsList.innerHTML = songs.map((s, i) => createSongItem(s, i + 1)).join('');
+    updateStats();
+  }
+
+  function updateStats() {
+    const total = songs.reduce((sum, s) => sum + s.size, 0);
+    const avg = songs.length ? total / songs.length : 0;
+    document.getElementById('totalSongs').textContent = songs.length;
+    document.getElementById('totalSize').textContent = fmt(total).split(' ')[0];
+    document.getElementById('avgSize').textContent = fmt(avg).split(' ')[0];
+    document.getElementById('count').textContent = songs.length + ' song' + (songs.length !== 1 ? 's' : '');
+  }
+
+  async function playSong(id) {
+    const idx = songs.findIndex(s => s.id === id);
+    if (idx < 0) return;
+    currentSongIndex = idx;
+    const s = songs[idx];
+
+    // Always regenerate blob URL from s.blob
+    if (audioPlayer.src) {
+      try { URL.revokeObjectURL(audioPlayer.src); } catch (e) { }
+    }
+    if (s.blob) {
+      const url = URL.createObjectURL(s.blob);
+      audioPlayer.src = url;
+    }
+
+    // Restore position
+    const savedState = JSON.parse(localStorage.getItem('musicPlayerState') || '{}');
+    audioPlayer.currentTime = savedState.currentTime || 0;
+
+    // Only play due to user click
+    audioPlayer.play().then(() => {
+      isPlaying = true;
+      nowPlayingInfo.textContent = `Now playing: ${s.name}`;
+      updatePlayButton();
+      render();
+    }).catch(err => {
+      console.error('Play failed:', err);
+    });
+  }
+
+  function togglePlay() {
+    if (currentSongIndex === -1 && songs.length > 0) {
+      playSong(songs[0].id);
+    } else if (isPlaying) {
+      audioPlayer.pause();
+      isPlaying = false;
+      updatePlayButton();
+    } else {
+      audioPlayer.play().then(() => {
+        isPlaying = true;
+        updatePlayButton();
+      }).catch(err => {
+        console.error('togglePlay error:', err);
+      });
+    }
+  }
+
+  function nextSong() {
+    if (!songs.length) return;
+    currentSongIndex = (currentSongIndex + 1) % songs.length;
+    playSong(songs[currentSongIndex].id);
+  }
+
+  function prevSong() {
+    if (!songs.length) return;
+    currentSongIndex = currentSongIndex <= 0 ? songs.length - 1 : currentSongIndex - 1;
+    playSong(songs[currentSongIndex].id);
+  }
+
+  function updatePlayButton() {
+    if (isPlaying) {
+      playPauseBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+      `;
+      playPauseBtn.classList.add('playing');
+    } else {
+      playPauseBtn.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      `;
+      playPauseBtn.classList.remove('playing');
+    }
+  }
+
+  async function handleFiles(fileList) {
+    for (let file of fileList) {
+      if ((file.type.startsWith('audio/') || file.type === 'video/mp4') || file.name.match(/\.(mp3|mp4)$/i)) {
+        const blob = file;
+        const id = `${Date.now()}-${Math.random().toString(36).substr(2)}`;
+        const songObj = {
+          id: id,
+          name: file.name,
+          size: file.size,
+          blob: blob,
+          time: Date.now()
+        };
+        songs.push(songObj);
+        try {
+          await addSongToDb(songObj);
+        } catch (e) {
+          console.error('DB save error', e);
+        }
+      }
+    }
+    await loadSongsFromDb();
+    render();
+  }
+
+  async function dlSong(id) {
+    const s = songs.find(x => x.id === id);
+    if (s) {
+      let url;
+      if (s.blob) {
+        url = URL.createObjectURL(s.blob);
+      }
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = s.name;
+      a.click();
+    }
+  }
+
+  async function delSong(id) {
+    if (songs[currentSongIndex]?.id === id) {
+      audioPlayer.pause();
+      audioPlayer.src = '';
+      isPlaying = false;
+      currentSongIndex = -1;
+      updatePlayButton();
+      nowPlayingInfo.textContent = 'Ready to play';
+    }
+    songs = songs.filter(s => s.id !== id);
+    try {
+      await deleteSongFromDb(id);
+    } catch (e) {
+      console.error('DB delete error', e);
+    }
+    render();
+  }
+
+  async function loadSongsFromDb() {
+    try {
+      const stored = await getAllSongsFromDb();
+      songs = stored;
+    } catch (e) {
+      console.error('DB load error', e);
+      songs = [];
+    }
+  }
+
+  function restorePlaybackState() {
+    const saved = localStorage.getItem('musicPlayerState');
+    if (!saved) return;
+    try {
+      const state = JSON.parse(saved);
+      if (state.currentSongId != null) {
+        currentSongIndex = songs.findIndex(s => s.id === state.currentSongId);
+      }
+      const s = songs[currentSongIndex];
+      if (s && s.blob) {
+        // regenerate blob URL
+        if (audioPlayer.src) {
+          try { URL.revokeObjectURL(audioPlayer.src); } catch (e) {}
+        }
+        const url = URL.createObjectURL(s.blob);
+        audioPlayer.src = url;
+        audioPlayer.currentTime = state.currentTime || 0;
+      }
+      isPlaying = false;  // do not autoplay
+
+      nowPlayingInfo.textContent = s ? `Paused: ${s.name}` : 'Ready to play';
+      updatePlayButton();
+      render();
+    } catch (e) {
+      console.error('Error restoring state', e);
+    }
+  }
+
+  async function init() {
+    await openDb();
+    await loadSongsFromDb();
+    render();
+    restorePlaybackState();
+  }
+
+  window.addEventListener('beforeunload', () => {
+    const state = {
+      currentSongId: songs[currentSongIndex]?.id || null,
+      currentTime: audioPlayer.currentTime || 0,
+      isPlaying: isPlaying
+    };
+    localStorage.setItem('musicPlayerState', JSON.stringify(state));
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      const state = {
+        currentSongId: songs[currentSongIndex]?.id || null,
+        currentTime: audioPlayer.currentTime || 0,
+        isPlaying: isPlaying
+      };
+      localStorage.setItem('musicPlayerState', JSON.stringify(state));
+    }
+  });
+
+  init();
+
+  // Expose for inline onClick
+  window.playSong = playSong;
+  window.dlSong = dlSong;
+  window.delSong = delSong;
+  window.showPage = showPage;
   </script>
 </body>
 </html>
