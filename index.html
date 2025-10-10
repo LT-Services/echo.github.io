@@ -8,6 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Persistent Music Player</title>
   <style>
+    /* (Your existing CSS here — omitted for brevity) */
     * {
       margin: 0;
       padding: 0;
@@ -630,7 +631,7 @@
       `;
     }
 
-    async function render() {
+    function render() {
       if (!songs.length) {
         songsList.innerHTML = `
           <div class="empty">
@@ -783,11 +784,69 @@
       }
     }
 
+    function restorePlaybackState() {
+      const saved = localStorage.getItem('musicPlayerState');
+      if (!saved) return;
+      try {
+        const state = JSON.parse(saved);
+        if (!state.currentSongId) return;
+        const idx = songs.findIndex(s => s.id === state.currentSongId);
+        if (idx === -1) return;
+        currentSongIndex = idx;
+        const s = songs[idx];
+        if (s.blob) {
+          const url = URL.createObjectURL(s.blob);
+          audioPlayer.src = url;
+        }
+        audioPlayer.currentTime = state.currentTime || 0;
+        nowPlayingInfo.textContent = `Now playing: ${s.name}`;
+        render();
+
+        if (state.isPlaying) {
+          // Browser may block autoplay, so we wait for a user gesture
+          const tryPlay = () => {
+            audioPlayer.play().catch(err => {
+              console.warn('Autoplay blocked, waiting for user interaction', err);
+            });
+            isPlaying = true;
+            updatePlayButton();
+            document.removeEventListener('click', tryPlay);
+          };
+          document.addEventListener('click', tryPlay);
+        }
+      } catch (e) {
+        console.error('Error restoring state', e);
+      }
+    }
+
     async function init() {
       await openDb();
       await loadSongsFromDb();
       render();
+      restorePlaybackState();
     }
+
+    // Save state before unload / page hide
+    window.addEventListener('beforeunload', () => {
+      const state = {
+        currentSongId: songs[currentSongIndex]?.id || null,
+        currentTime: audioPlayer.currentTime || 0,
+        isPlaying: isPlaying
+      };
+      localStorage.setItem('musicPlayerState', JSON.stringify(state));
+    });
+
+    // Also capture visibility change (for some mobile behaviors)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        const state = {
+          currentSongId: songs[currentSongIndex]?.id || null,
+          currentTime: audioPlayer.currentTime || 0,
+          isPlaying: isPlaying
+        };
+        localStorage.setItem('musicPlayerState', JSON.stringify(state));
+      }
+    });
 
     init();
 
